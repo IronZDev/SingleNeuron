@@ -24,14 +24,11 @@ class Neuron():
         if not derivative:
             return 1 / (1 + np.exp(-x))
         else:
-            return x * (1 - x)
+            return self.sigmoid(x) * (1 - self.sigmoid(x))
 
     def heaviside(self, x, derivative=False):
         if not derivative:
-            if x >= 0:
-                return 1
-            else:
-                return 0
+            return np.heaviside(x, 1)
         else:  # Derivative mode
             return 1
 
@@ -39,9 +36,9 @@ class Neuron():
         # training the model to make accurate predictions while adjusting weights continually
         for _ in range(training_iterations):
             for input_val, output in zip(training_inputs, training_outputs):
-                calculated = self.predict(input_val)
+                calculated = self.predict(self.weights @ input_val)
                 error = output - calculated
-                adjustments = self.learning_rate * error * self.activation_function(input_val, True) * input_val
+                adjustments = self.learning_rate * error * self.activation_function(self.weights @ input_val, True) * input_val
                 self.weights += adjustments
                 # print(self.weights)
             # # siphon the training data via  the neuron
@@ -64,7 +61,7 @@ class Neuron():
         # passing the inputs via the neuron to get output
         ins = ins.astype(float)
         # output = self.activation_function(np.dot(ins, self.weights[1:]))
-        output = self.activation_function(np.dot(ins, self.weights))
+        output = self.activation_function(ins)
         return output
 
 
@@ -211,11 +208,11 @@ while True:
             neuron = Neuron(int(values['size']), values['activation'], float(values['learningRate']))
             # print(values['activation'])
             neuron.train(np.asarray(inputs), np.asarray(outputs), int(values['epochs']))
-            decision_x = [min(points[0]) - 2, max(points[0]) + 2]
-            decision_y = []
-            for i in decision_x:
-                # y=ax+b calculated for both min and max points
-                decision_y.append((-neuron.weights[1]/neuron.weights[2])*i-neuron.weights[0]/neuron.weights[2])
+            decision_x = np.linspace(np.amin(points[0]), np.amax(points[0]))
+            decision_y = -(neuron.weights[0] + neuron.weights[1] * decision_x)/neuron.weights[2]
+            # for i in decision_x:
+            #     # y=ax+b calculated for both min and max points
+            #     decision_y.append((-neuron.weights[1]/neuron.weights[2])*i-neuron.weights[0]/neuron.weights[2])
 
             if 'fig_canvas_agg' in globals():  # Update if plot already exists
                 plt.clf()
